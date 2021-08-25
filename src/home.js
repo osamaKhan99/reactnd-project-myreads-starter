@@ -1,27 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css'
 import { Link } from 'react-router-dom'
 import * as Api from './BooksAPI'
 
-class Home extends React.Component {
-  state = {
-      books: []
-  }
 
-  componentDidMount() {
+function Home(){
+
+  const [books, setBooks] = useState([])
+
+
+  useEffect(() => {
+    let isActive = true
     Api.getAll()
-    .then( res => this.setState({
-      books: res
-    }))
-  }
+    .then( async(res) => { 
+      if(isActive){
+        await setBooks(res)
+      }})
+    return () => {
+      isActive = false
+    }
+  },[books]);
+
   
   
-  handleChange = (book,event) => {
+  const handleChange = (book,event) => {
     const shelf = event.target.value
-    this.state.books.forEach(b=>{
+    books.forEach(b=>{
       if(b.id === book.id){
         b.shelf = shelf
-        this.setState((book)=>({
+        setBooks((book)=>({
           books: book.books
         }))
       }
@@ -29,24 +36,20 @@ class Home extends React.Component {
     Api.update(book, shelf)
   }
 
-
-  render(){
-      console.log(this.state.books)
-      const books = this.state.books;
-      const shelves = [
-        {
-            name: "Currently Reading",
-            title: "currentlyReading"
-        },
-        {
-            name: "Want To Read",
-            title: "wantToRead"
-        },
-        {
-            name: "Read",
-            title: "read"
-        }
-    ]
+    const shelves = [
+      {
+          name: "Currently Reading",
+          title: "currentlyReading"
+      },
+      {
+          name: "Want To Read",
+          title: "wantToRead"
+      },
+      {
+          name: "Read",
+          title: "read"
+      }
+  ]
     return(
         <div className="list-books">
           <div>
@@ -63,13 +66,13 @@ class Home extends React.Component {
                     <div className="bookshelf-books">
                       <ol className="books-grid">
                         {
-                          books.filter(arr=> arr.shelf === shelf.title).map((item,i)=>(
-                            <li key={i}>
+                          books.length > 0 ?( books.filter(arr=> arr.shelf === shelf.title).map((item)=>(
+                            <li key={item.id}>
                             <div className="book">
                               <div className="book-top">
                                 <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url(${item.imageLinks.thumbnail})` }}></div>
                                 <div className="book-shelf-changer">
-                                  <select value={item.shelf} onChange={(e)=>this.handleChange(item,e)}>
+                                  <select value={item.shelf} onChange={(e)=>handleChange(item,e)}>
                                     <option value="move" disabled>Move to...</option>
                                     <option value="currentlyReading">Currently Reading</option>
                                     <option value="wantToRead">Want to Read</option>
@@ -82,7 +85,8 @@ class Home extends React.Component {
                               <div className="book-authors">{item.author}</div>
                             </div>
                             </li>
-                          ))
+                          )))
+                          : null
                         }
                       </ol>
                     </div>
@@ -99,6 +103,5 @@ class Home extends React.Component {
           </div>
         </div>
     )
-  }
 }
 export default Home

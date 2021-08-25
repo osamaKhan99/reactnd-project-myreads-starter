@@ -1,67 +1,62 @@
-import React from 'react';
+import React, { useState} from 'react';
 import './App.css'
 import {Link} from "react-router-dom"
 import * as Api from './BooksAPI'
 
-class Search extends React.Component{
+function Search(){
 
-    state={
-        books: [],
-        error: false,
-        query:'',
-    }
-
-    handleInput = (event) =>{
-        const query = event.target.value
-        this.setState({query})
-        if(query){
-         Api.search(query)
+  const [books, setBooks] = useState([])
+  const [error, setError] = useState(false)
+  const [query, setQuery] = useState('')
+    
+    const handleInput = (event) =>{
+        const queryString = event.target.value
+        setQuery(queryString)
+        if(queryString){
+         Api.search(queryString)
             .then( res => 
                     res.length > 0 
-                    ? this.setState({ books: res, error:false})
-                    : this.setState({ books:[], error:true})
+// eslint-disable-next-line
+                    ? (setBooks(res),
+                      setError(false))
+                    : (setBooks([]), setError(true))
                 )   
         }
-        else {
-            this.setState({ books:[]})
-        }
+        
     }
 
-    handleChange = (book,event) => {
-        const shelf = event.target.value
-        this.state.books.forEach(b=>{
+    const handleChange = (book,event) => {
+        const shelfState = event.target.value
+        books.forEach(b=>{
           if(b.id === book.id){
-            b.shelf = shelf
-            this.setState((book)=>({
+            b.shelf = shelfState
+            setBooks((book)=>({
               books: book.books
             }))
           }
         })
-        Api.update(book, shelf)
+        Api.update(book, shelfState)
     }
 
-    
-    render(){
-        const { books, error } = this.state
         return(
             <div className="search-books">
             <div className="search-books-bar">
               <Link to="/"><button className="close-search">Close</button></Link>
               <div className="search-books-input-wrapper">
-                <input type="text" value={this.state.query} placeholder="Search by title or author" onChange={this.handleInput}/>
+                <input type="text" value={query} placeholder="Search by title or author" onChange={(e)=>handleInput(e)}/>
 
               </div>
             </div>
             <div className="search-books-results">
                 <ol className="books-grid">
                 {
-                    books.length > 0? ( books.map((item,i)=>(
-                        <li key={i}>
+                    books.length > 0 ? ( books.map((item)=>(
+                        <li key={item.id}>
                         <div className="book">
                             <div className="book-top">
                             <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url(${item.imageLinks.thumbnail})` }}></div>
                             <div className="book-shelf-changer">
-                                <select value="none" onChange={(e)=>this.handleChange(item,e)}>
+                                <select value="none" onChange={(e)=>handleChange(item,e)}>
                                 <option value="move" disabled>Move to...</option>
                                 <option value="currentlyReading">Currently Reading</option>
                                 <option value="wantToRead">Want to Read</option>
@@ -75,12 +70,11 @@ class Search extends React.Component{
                         </div>
                         </li>
                         ))) 
-                        :( error && (<h2>Sorry! Cannot find book with this keyword</h2>))
+                        :(error &&<h2>Sorry! Cannot find book with this keyword</h2>)
                     }
                 </ol>
             </div>
           </div>
         )
-    }
 }
 export default Search
